@@ -5,26 +5,32 @@ from math import log
 from sklearn import datasets
 
 
-def calculate_ent(data_set):
-    """
-    计算样本集的信息熵
-    :param data_set: 样本集
-    :return: 信息熵
-    """
+def calculate_gini(data_set):
+    data_set_class = [example[-1] for example in data_set]
     data_set_length = len(data_set)
-    class_list = [example[-1] for example in data_set]   # 结果分类列表
-    class_count = {}                                     # 每个结论类的数量
-    # 遍历所有的样本, 计算每种分类的数量
-    for key in class_list:
-        if key not in class_count.keys():
-            class_count[key] = 0
-        class_count[key] += 1
-    ent = 0.0
-    # 计算信息熵
-    for key in class_count:
+    # 每个类型的数量
+    class_count = {}
+    for clazz in data_set_class:
+        if clazz not in class_count.keys():
+            class_count[clazz] = 0
+        class_count[clazz] += 1
+    gini = 1
+    for key in class_count.keys():
         prob = float(class_count[key]) / data_set_length
-        ent -= prob * log(prob, 2)
-    return ent
+        gini -= prob * prob
+    return gini
+
+
+def calculate_gini_index(data_set, axis):
+    data_set_length = len(data_set)
+    feature_class = [example[axis] for example in data_set]
+    unique_feature_class = set(feature_class)
+    gini_index = 0.0
+    for feature in unique_feature_class:
+        feature_data_set = split_data_set(data_set, axis, feature)
+        feature_gini = calculate_gini(feature_data_set)
+        gini_index += float(len(feature_data_set)) / data_set_length * feature_gini
+    return gini_index
 
 
 def split_data_set(data_set, axis, value):
@@ -45,72 +51,25 @@ def split_data_set(data_set, axis, value):
     return return_data_set
 
 
-def calculate_gain(data_set, axis):
+def choose_min_gini_index(data_set):
     """
-    计算属性axis的信息增益
+    选取gini指数最小的属性
     :param data_set:
-    :param axis: 属性下标
     :return:
     """
-    data_set_ent = calculate_ent(data_set)
-    feature_class = [example[axis] for example in data_set]
-    unique_feature_class = set(feature_class)
-    current_ent = data_set_ent
-    data_set_length = len(data_set)
-    for feature in unique_feature_class:
-        feature_data_set = split_data_set(data_set, axis, feature)
-        feature_data_set_ent = calculate_ent(feature_data_set)
-        current_ent -= float(len(feature_data_set)) / data_set_length * feature_data_set_ent
-    return current_ent
-
-
-def calculate_intrinsic_value(data_set, axis):
-    """
-    计算属性axis的固有值
-    :param data_set:
-    :param axis: 属性下标
-    :return:
-    """
-    feature_class = [example[axis] for example in data_set]
-    unique_feature_class = set(feature_class)
-    data_set_length = float(len(data_set))
-    iv = 0.0
-    for feature in unique_feature_class:
-        feature_data_set = split_data_set(data_set, axis, feature)
-        feature_data_set_length = len(feature_data_set)
-        iv -= feature_data_set_length / data_set_length * log(feature_data_set_length / data_set_length, 2)
-    return iv
-
-
-def calculate_gain_ratio(data_set, axis):
-    """
-    计算属性axis信息增益率
-    :param data_set:
-    :param axis: 属性下标
-    :return:
-    """
-    gain = calculate_gain(data_set, axis)
-    iv = calculate_intrinsic_value(data_set, axis)
-    return gain / iv
-
-
-def choose_max_gain_ratio(data_set):
-    """
-    选取"增益增益率"gain_ratio最大的属性
-    :param data_set: 样本集
-    :return: 属性
-    """
-    feature_length = len(data_set[0]) - 1
-    max_feature_gain_ratio = 0.0     # 初始最大信息增益
-    max_feature_axis = -1      # 初始的产生最大信息增益的属性下标
-    # 计算每个属性的信息增益s
-    for i in range(feature_length):
-        # 计算对于属性i的信息增益
-        current_gain_ratio = calculate_gain(data_set, i)
-        if max_feature_gain_ratio < current_gain_ratio:
-            max_feature_gain_ratio = current_gain_ratio
-            max_feature_axis = i
-    return max_feature_axis
+    feature_lenght = len(data_set[0]) - 1
+    min_gini_index = 0.0
+    min_gini_axis = -1
+    for i in range(feature_lenght):
+        current_gini_index = calculate_gini_index(data_set, i)
+        # 因为不知道min_gini_index的初始值为多少,所有讲其赋值为属性0的gini指数
+        if i == 0:
+            min_gini_index = current_gini_index
+            min_gini_axis = 0
+        if current_gini_index < min_gini_index:
+            min_gini_index = current_gini_index
+            min_gini_axis = i
+    return min_gini_axis
 
 
 def majority_count(data_set):
@@ -143,7 +102,7 @@ def create_tree(data_set, labels):
     if len(data_set[0]) == 1:
         return majority_count(data_set)
     # 获取最优属性
-    axis = choose_max_gain_ratio(data_set)
+    axis = choose_min_gini_index(data_set)
     axis_feature_list = [example[axis] for example in data_set]
     label = labels[axis]
     del labels[axis]

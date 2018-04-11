@@ -123,7 +123,7 @@ def create_tree(data_set, labels):
 
 
 def create_data_set():
-    file = open('/home/mejhwu/workspace/machine_learning/breast-cancer-wisconsin.data', 'r')
+    file = open('breast-cancer-wisconsin.data', 'r')
     data = []
     line = file.readline()
     while line:
