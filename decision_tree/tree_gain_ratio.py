@@ -94,6 +94,30 @@ def calculate_gain_ratio(data_set, axis):
     return gain / iv
 
 
+def choose_greater_avg_gain(data_set):
+    """
+    选取信息增益高于平均水平的属性
+    :param data_set:
+    :return:
+    """
+    feature_length = len(data_set[0]) - 1
+    # 计算每个属性的信息增益s
+    feature_gain = dict()
+    for i in range(feature_length):
+        # 计算对于属性i的信息增益
+        current_gain = calculate_gain(data_set, i)
+        feature_gain[i] = current_gain
+    sum_gain = 0.0
+    for gain in feature_gain.values():
+        sum_gain += gain
+    avg_gain = sum_gain / len(feature_gain)
+    ret_axises = []
+    for axis in feature_gain.keys():
+        if feature_gain[axis] > avg_gain:
+            ret_axises.append(axis)
+    return ret_axises
+
+
 def choose_max_gain_ratio(data_set):
     """
     选取"增益增益率"gain_ratio最大的属性
@@ -103,10 +127,11 @@ def choose_max_gain_ratio(data_set):
     feature_length = len(data_set[0]) - 1
     max_feature_gain_ratio = 0.0     # 初始最大信息增益
     max_feature_axis = -1      # 初始的产生最大信息增益的属性下标
-    # 计算每个属性的信息增益s
-    for i in range(feature_length):
+    # 计算每个属性的信息增益
+    candidate_axis = choose_greater_avg_gain(data_set)
+    for i in candidate_axis:
         # 计算对于属性i的信息增益
-        current_gain_ratio = calculate_gain(data_set, i)
+        current_gain_ratio = calculate_gain_ratio(data_set, i)
         if max_feature_gain_ratio < current_gain_ratio:
             max_feature_gain_ratio = current_gain_ratio
             max_feature_axis = i

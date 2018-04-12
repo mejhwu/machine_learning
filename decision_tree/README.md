@@ -85,3 +85,14 @@ python代码[tree_gain.py](https://github.com/mejhwu/machine_learning/blob/maste
 
 ### 2.2 增益率
 
+信息增益准则对可取值较多的属性有所偏好,为减少这种偏好可能带来的不利影响,可使用"增益率"来选择最优划分属性, 增益率定义为
+
+$$Gain_ratio(D,a)=\frac{Grain(D,a)}{IV(a)}$$
+
+其中
+
+$$IV(a)=-\sum_{v=1}^{V}\frac{|D^v|}{|D|}log_2\frac{|D^v|}{|D|}$$
+
+$IV(a)$称为属性$a$的"固有值"(intrinsic value). 属性$a$的可能取值数目越多(即V越大), 则$IV(a)$的值通常会越大.
+
+需要注意的是, 增益率准则对可取值数目较少的属性所有偏好, 因此根据C4.5算法, 可先从候选划分属性中找出信息增益高于平均水平的属性,再从中选择增益率最高的.
